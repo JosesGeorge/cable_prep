@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INZORA CablePrep</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="brand-mark">I</span><div><span class="name">INZORA CABLEPREP</span><span class="sub">Specimen preparation &amp; quality control</span></div></div>
+  <div class="status"><span class="led" id="sysLed"></span><span id="sysText">SYSTEM: READY</span></div>
+</header>
+<div class="shell">
+  <nav>
+    <button class="active" data-screen="control"><span class="num">01</span><span class="label">Control Room</span></button>
+    <button data-screen="prep"><span class="num">02</span><span class="label">Specimen Preparation</span></button>
+    <button data-screen="quality"><span class="num">03</span><span class="label">Quality &amp; Traceability</span></button>
+  </nav>
+  <main>
+
+    <section class="screen active" id="screen-control">
+      <div class="grid g2">
+        <div>
+          <div class="panel" style="margin-bottom:14px;">
+            <h3>MACHINE CONTROL</h3>
+            <button class="btn estop" id="btnEstop">■ EMERGENCY STOP</button>
+            <div class="ctrl-row">
+              <button class="btn start" id="btnStart">▶ Start</button>
+              <button class="btn stop" id="btnStop">■ Stop</button>
+            </div>
+            <button class="btn" id="btnReset" style="margin-bottom:14px;">↻ Reset</button>
+            <div class="field"><label>FEED SPEED <span class="val" id="feedVal">25 mm/s</span></label><input type="range" id="feedSlider" min="5" max="60" value="25"></div>
+            <div class="field"><label>CUT DEPTH <span class="val" id="depthVal">1.8 mm</span></label><input type="range" id="depthSlider" min="5" max="30" value="18"></div>
+            <div class="field" style="margin-bottom:0;"><label>FORCE LIMIT <span class="val" id="limitVal">12 N</span></label><input type="range" id="limitSlider" min="6" max="20" value="12"></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:14px;">
+            <h3>LIVE PROCESS</h3>
+            <div class="flow" id="flow"></div>
+          </div>
+          <div class="panel">
+            <h3>LIVE SENSOR DATA</h3>
+            <div class="sensors">
+              <div class="sensor"><div class="lbl">DIAMETER</div><div class="num" id="s-diam">8.42<span class="unit">mm</span></div></div>
+              <div class="sensor"><div class="lbl">OVALITY</div><div class="num" id="s-oval">0.12<span class="unit">mm</span></div></div>
+              <div class="sensor"><div class="lbl">CUTTING FORCE</div><div class="num" id="s-force">0.0<span class="unit">N</span></div></div>
+              <div class="sensor"><div class="lbl">FEED SPEED</div><div class="num" id="s-feed">0.0<span class="unit">mm/s</span></div></div>
+              <div class="sensor"><div class="lbl">SPECIMEN LENGTH</div><div class="num" id="s-len">150<span class="unit">mm</span></div></div>
+              <div class="sensor"><div class="lbl">STATUS</div><div class="num" id="s-status" style="font-size:15px;">IDLE</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-prep">
+      <div class="grid g2">
+        <div class="panel">
+          <h3>CABLE PROFILE</h3>
+          <div class="cross">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="60" fill="none" stroke="#212a37" stroke-width="1"/>
+              <ellipse id="cableEllipse" cx="80" cy="80" rx="58" ry="55" fill="none" stroke="#3ddbd9" stroke-width="2"/>
+              <line x1="80" y1="20" x2="80" y2="140" stroke="#212a37" stroke-width="1" stroke-dasharray="3,3"/>
+              <line x1="20" y1="80" x2="140" y2="80" stroke="#212a37" stroke-width="1" stroke-dasharray="3,3"/>
+            </svg>
+          </div>
+          <div class="qc-row"><span>Diameter</span><span id="p-diam" class="mono">8.42 mm</span></div>
+          <div class="qc-row"><span>Ovality</span><span id="p-oval" class="mono">0.12 mm</span></div>
+          <div class="qc-row"><span>Runout</span><span id="p-run" class="mono">0.08 mm</span></div>
+          <div class="qc-row"><span>Length</span><span id="p-len" class="mono">150.0 mm</span></div>
+          <div class="qc-row"><span>Tolerance</span><span class="mono" style="color:var(--green)">±0.15 mm</span></div>
+        </div>
+        <div class="panel">
+          <h3>ADAPTIVE CUTTING — CLOSED LOOP CONTROL</h3>
+          <div class="qc-row"><span>Cable diameter</span><span id="a-diam" class="mono">8.42 mm</span></div>
+          <div class="qc-row"><span>Estimated boundary</span><span id="a-bound" class="mono">5.76 mm</span></div>
+          <div class="qc-row"><span>Target cut depth</span><span id="a-target" class="mono">1.82 mm</span></div>
+          <div class="qc-row"><span>Force limit</span><span id="a-limit" class="mono">12 N</span></div>
+          <div class="loop" style="margin:16px 0;">
+            <div class="box" id="loopForce">CURRENT FORCE 0.0 N</div>
+            <div class="arrow">↓</div>
+            <div class="box">CUTTING PARAMETERS</div>
+            <div class="arrow">↓</div>
+            <div class="box" id="loopDepth">ADAPTIVE DEPTH = 1.80 mm</div>
+          </div>
+          <button class="btn" id="btnSpike" style="width:100%;">⚠ Simulate High-Force Event</button>
+          <small class="hint">Triggers a force spike during cutting to demonstrate depth correction and resume.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-quality">
+      <div class="grid g2">
+        <div class="panel">
+          <h3>VISION INSPECTION</h3>
+          <div class="qc-row"><span>Length</span><span id="v-len"><span class="wait">···</span></span></div>
+          <div class="qc-row"><span>Width</span><span id="v-wid"><span class="wait">···</span></span></div>
+          <div class="qc-row"><span>Thickness</span><span id="v-thk"><span class="wait">···</span></span></div>
+          <div class="qc-row"><span>Edge quality</span><span id="v-edge"><span class="wait">···</span></span></div>
+          <div class="qc-row"><span>Surface defect</span><span id="v-surf"><span class="wait">···</span></span></div>
+          <div class="result-banner" id="resultBanner">AWAITING SPECIMEN</div>
+        </div>
+        <div class="panel">
+          <h3>SPECIMEN RECORD LOG</h3>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>ID</th><th>Diam</th><th>Cut Depth</th><th>Max Force</th><th>Length</th><th>Result</th><th>Time</th></tr></thead>
+              <tbody id="logBody"><tr><td colspan="7" style="color:var(--dim)">No specimens run yet</td></tr></tbody>
+            </table>
+          </div>
+          <button class="btn" id="btnExport" style="width:100%; margin-top:12px;">Export CSV</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px;">
+        <h3>PROTOTYPE STATUS — 40%</h3>
+        <ul class="status-list">
+          <li class="done">Process workflow simulation</li>
+          <li class="done">Machine control dashboard</li>
+          <li class="done">Sensor-data simulation</li>
+          <li class="done">Adaptive cutting logic</li>
+          <li class="done">Specimen quality evaluation</li>
+          <li class="done">Digital specimen logging</li>
+          <li>Physical feed mechanism</li>
+          <li>Force sensor integration</li>
+          <li>Optical measurement hardware</li>
+          <li>Automated cutting mechanism</li>
+          <li>Vision camera integration</li>
+        </ul>
+        <div class="bar"><div class="bar-fill" style="width:40%"></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
